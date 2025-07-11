@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthService from '../services/AuthService';
 import Sidebar from './Sidebar';
-import Navbar from './Navbar';
 import FeaturedVehicles from './FeaturedVehicles';
 import TestDrive from './TestDrive';
 import Locations from './Locations';
@@ -15,41 +14,17 @@ import ApproveBookings from './ApproveBookings';
 import PartsInventory from './PartsInventory';
 import '../styles/Dashboard.css';
 
-
 const Dashboard = () => {
   const navigate = useNavigate();
-
-  // User and display state
   const [user, setUser] = useState(null);
-  const [activeSection, setActiveSection] = useState('featured');
+  const [activeSection, setActiveSection] = useState('dashboard');
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
-  
-  // Booking tabs state
   const [activeBookingTab, setActiveBookingTab] = useState('car');
-  
-  // Location and test drive state
-  const [locations, setLocations] = useState([]);
-  const [testDriveForm, setTestDriveForm] = useState({
-    car: '',
-    location: '',
-    date: '',
-    time: '',
-    comments: ''
-  });
-  
-  // State for selected car (for test drives and bookings)
   const [selectedCar, setSelectedCar] = useState(null);
-  
-  // Loading and error states
+  const [testDriveForm, setTestDriveForm] = useState({ car: '', location: '', date: '', time: '', comments: '' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  // Toggle sidebar visibility
-  const toggleSidebar = () => {
-    setSidebarExpanded(prev => !prev);
-  };
 
-  // Authenticate user
   useEffect(() => {
     const currentUser = AuthService.getCurrentUser();
     if (currentUser) {
@@ -65,20 +40,111 @@ const Dashboard = () => {
     navigate('/login');
   };
 
-  // Get section title based on active section
-  const getSectionTitle = () => {
-    const titles = {
-      featured: 'Explore Our Vehicles',
-      testdrive: 'Schedule a Test Drive',
-      parts: 'Inventory Management',
-      locations: 'Find a Dealer',
-      bookings: activeBookingTab === 'car' ? 'My Car Bookings' : 'My Spare Parts Orders',
-      services: 'Book a Service',
-      'manage-locations': 'Manage Locations',
-      'approve-bookings': 'Approve Bookings',
-      'car-management': 'Manage Vehicles'
+  const toggleSidebar = () => setSidebarExpanded(prev => !prev);
+
+  const canAccessSection = (section) => {
+    if (!user) return false;
+    const role = user.role;
+    const access = {
+      all: ['dashboard', 'featured', 'locations'],
+      customer: ['testdrive', 'bookings', 'services'],
+      employee: ['approve-bookings', 'parts', 'car-management'],
+      supervisor: ['manage-locations']
     };
-    return titles[activeSection] || 'Welcome';
+
+    return (
+      access.all.includes(section) ||
+      (role === 'customer' && access.customer.includes(section)) ||
+      (['employee', 'supervisor'].includes(role) && access.employee.includes(section)) ||
+      (role === 'supervisor' && access.supervisor.includes(section))
+    );
+  };
+
+  const renderBookingTabs = () => (
+    <div className="booking-tabs">
+      <button className={`tab-button ${activeBookingTab === 'car' ? 'active' : ''}`} onClick={() => setActiveBookingTab('car')}>Car Bookings</button>
+      <button className={`tab-button ${activeBookingTab === 'spareparts' ? 'active' : ''}`} onClick={() => setActiveBookingTab('spareparts')}>Spare Parts Orders</button>
+    </div>
+  );
+
+  const renderSection = () => {
+    switch (activeSection) {
+      case 'dashboard':
+        return (
+          <div className="dashboard-welcome realistic">
+            <div className="hero-section">
+              <img
+                src="https://media.cnn.com/api/v1/images/stellar/prod/161217142430-2017-cars-ferrari-1.jpg?q=w_1600,h_900,x_0,y_0,c_fill"
+                alt="Luxury Car"
+                className="hero-image"
+              />
+              <div className="hero-text">
+                <h1 className="quote">"Drive your dreams. Control your journey."</h1>
+                <p>Welcome to DriveEase, where innovation meets performance.</p>
+              </div>
+            </div>
+
+            <section className="features-intro">
+              <h2>What You Can Do</h2>
+              <div className="features-grid">
+                <div className="feature-card">
+                  <img 
+                    src="https://static.vecteezy.com/system/resources/previews/060/518/882/non_2x/retro-car-in-classic-silhouette-form-vector.jpg" 
+                    alt="Explore Cars"
+                    style={{ width: 26, height: 26 }} 
+                  />
+                  Explore New Cars
+                </div>
+                <div className="feature-card">📅 Book Test Drives</div>
+                <div className="feature-card">🛠 Schedule Services</div>
+                <div className="feature-card">📦 Manage Spare Parts</div>
+                <div className="feature-card">📍 Locate Nearby Dealers</div>
+                <div className="feature-card">📊 Track All Bookings</div>
+              </div>
+            </section>
+
+            <footer className="dashboard-footer">
+              <p>&copy; 2025 DriveEase. Crafted with passion and precision.</p>
+            </footer>
+          </div>
+        );
+
+      case 'featured':
+        return <FeaturedVehicles user={user} setActiveSection={setActiveSection} setSelectedCar={setSelectedCar} />;
+
+      case 'testdrive':
+        return canAccessSection('testdrive') && <TestDrive user={user} selectedCar={selectedCar} />;
+
+      case 'locations':
+        return <Locations locations={[]} setTestDriveForm={setTestDriveForm} testDriveForm={testDriveForm} />;
+
+      case 'bookings':
+        return canAccessSection('bookings') && (
+          <>
+            {renderBookingTabs()}
+            {activeBookingTab === 'car' && <CarBookings user={user} selectedCar={selectedCar} />}
+            {activeBookingTab === 'spareparts' && <SparePartBookings user={user} />}
+          </>
+        );
+
+      case 'services':
+        return canAccessSection('services') && <ServiceBooking user={user} />;
+
+      case 'approve-bookings':
+        return canAccessSection('approve-bookings') && <ApproveBookings />;
+
+      case 'parts':
+        return canAccessSection('parts') && <PartsInventory />;
+
+      case 'car-management':
+        return canAccessSection('car-management') && <FeaturedVehicles user={user} setActiveSection={setActiveSection} isManageMode={true} />;
+
+      case 'manage-locations':
+        return canAccessSection('manage-locations') && <ManageLocations />;
+
+      default:
+        return <p>Section not available.</p>;
+    }
   };
 
   if (loading) {
@@ -90,132 +156,20 @@ const Dashboard = () => {
     );
   }
 
-  // Function to check if section is accessible for current user role
-  const canAccessSection = (section) => {
-    if (!user) return false;
-    
-    // Sections accessible to all users
-    if (['featured'].includes(section)) return true;
-    
-    // Customer-specific sections
-    if (['testdrive', 'bookings', 'services'].includes(section)) {
-      return user.role === 'customer';
-    }
-    
-    // Employee & Supervisor sections
-    if (['approve-bookings', 'parts', 'car-management'].includes(section)) {
-      return ['employee', 'supervisor'].includes(user.role);
-    }
-    
-    // Supervisor-only sections
-    if (['manage-locations'].includes(section)) {
-      return user.role === 'supervisor';
-    }
-    
-    return false;
-  };
-
-  // Render booking tabs navigation
-  const renderBookingTabs = () => {
-    return (
-      <div className="booking-tabs">
-        <button
-          className={`tab-button ${activeBookingTab === 'car' ? 'active' : ''}`}
-          onClick={() => setActiveBookingTab('car')}
-        >
-          Car Bookings
-        </button>
-        <button
-          className={`tab-button ${activeBookingTab === 'spareparts' ? 'active' : ''}`}
-          onClick={() => setActiveBookingTab('spareparts')}
-        >
-          Spare Parts Orders
-        </button>
-      </div>
-    );
-  };
   return (
-    <>
-      
-      <div className="dashboard-container">
-        <Sidebar
-          activeSection={activeSection}
-          setActiveSection={setActiveSection}
-          user={user}
-          handleLogout={handleLogout}
-          sidebarExpanded={sidebarExpanded}
-          toggleSidebar={toggleSidebar}
-        />
-        <main className={`main-content ${sidebarExpanded ? '' : 'expanded'}`}>
-          {error && <div className="error-message">{error}</div>}
-          {!error && (
-            <>
-              
-              {activeSection === 'featured' && (
-                <FeaturedVehicles 
-                  setActiveSection={setActiveSection} 
-                  user={user} 
-                  setSelectedCar={setSelectedCar}
-                />
-              )}
-              
-              {activeSection === 'testdrive' && canAccessSection('testdrive') && (
-                <TestDrive user={user} selectedCar={selectedCar} />
-              )}
-              
-              {activeSection === 'locations' && (
-                <Locations 
-                  locations={locations} 
-                  setActiveSection={setActiveSection}
-                  setTestDriveForm={setTestDriveForm}
-                  testDriveForm={testDriveForm}
-                />
-              )}
-              
-              {activeSection === 'bookings' && canAccessSection('bookings') && (
-  <>
-                {activeSection === 'bookings' && canAccessSection('bookings') && (
-  <>
-                {renderBookingTabs()} {/* 👈 This shows the Car/Spare Parts toggle buttons */}
-                {activeBookingTab === 'car' && <CarBookings user={user} selectedCar={selectedCar} />}
-                {activeBookingTab === 'spareparts' && <SparePartBookings user={user} />}
-  </>
-)}
-
-  </>
-)}
-
-
-              {activeSection === 'services' && canAccessSection('services') && (
-                <ServiceBooking user={user} />
-              )}
-
-              {activeSection === 'manage-locations' && canAccessSection('manage-locations') && (
-                <ManageLocations />
-              )}
-
-              {activeSection === 'approve-bookings' && canAccessSection('approve-bookings') && (
-                <ApproveBookings />
-              )}
-
-              {activeSection === 'parts' && canAccessSection('parts') && (
-                <PartsInventory />
-              )}
-
-              {activeSection === 'car-management' && canAccessSection('car-management') && (
-                <FeaturedVehicles 
-                  setActiveSection={setActiveSection} 
-                  user={user} 
-                  isManageMode={true} 
-                />
-              )}
-              
-              
-            </>
-          )}
-        </main>
-      </div>
-    </>
+    <div className="dashboard-container">
+      <Sidebar
+        activeSection={activeSection}
+        setActiveSection={setActiveSection}
+        user={user}
+        handleLogout={handleLogout}
+        sidebarExpanded={sidebarExpanded}
+        toggleSidebar={toggleSidebar}
+      />
+      <main className={`main-content ${sidebarExpanded ? '' : 'expanded'}`}>
+        {error ? <div className="error-message">{error}</div> : renderSection()}
+      </main>
+    </div>
   );
 };
 

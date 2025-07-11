@@ -40,14 +40,15 @@ CREATE TABLE reservations (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     car_id INT NOT NULL,
-    start_date DATE NOT NULL , -- No dynamic date in CHECK
-    end_date DATE NOT NULL ,
-    total_price DECIMAL(10,2) NOT NULL ,
-    status ENUM('pending', 'approved', 'canceled') DEFAULT 'pending',
+    order_date DATE NOT NULL,
+    total_price DECIMAL(10,2) NOT NULL,
+    payment_mode VARCHAR(50) NOT NULL,
+    status ENUM('pending', 'confirmed', 'canceled') DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (car_id) REFERENCES cars(id) ON DELETE CASCADE
 );
+
 
 -- Locations Table (Rental locations or service centers)
 CREATE TABLE locations (
@@ -127,4 +128,20 @@ CREATE TABLE approve_bookings (
 
   FOREIGN KEY (user_id) REFERENCES users(id),
   FOREIGN KEY (car_id) REFERENCES cars(id)
+);
+
+CREATE TABLE test_drive_reservations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    car_id INT NOT NULL,
+    location_id INT NOT NULL,
+    preferred_date DATE NOT NULL,
+    slot_number INT NOT NULL, -- e.g., Slot 1 = 9AM, Slot 2 = 10AM, etc.
+    status ENUM('pending', 'confirmed', 'completed', 'cancelled') DEFAULT 'pending',
+    comments TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (car_id) REFERENCES cars(id) ON DELETE CASCADE,
+    FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE CASCADE
 );

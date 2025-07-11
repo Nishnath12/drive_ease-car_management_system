@@ -4,6 +4,9 @@ const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 
+ // ✅ define it
+ // ✅
+
 // Load environment variables
 dotenv.config();
 
@@ -33,6 +36,7 @@ const reservationRoutes = require("./routes/reservations");
 const serviceRoutes = require("./routes/service");
 const sparePartsRoutes = require("./routes/spareParts");
 const sparePartBookingRoutes = require("./routes/sparePartBooking");
+const testDriveRoutes = require("./routes/testDriveRoutes");
 
 // Use routes
 app.use("/api/auth", authRoutes);
@@ -42,6 +46,7 @@ app.use("/api/reservations", reservationRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/spare-parts", sparePartsRoutes);
 app.use("/api/spare-bookings", sparePartBookingRoutes);
+app.use("/api/testdrives", testDriveRoutes);
 
 // Welcome route
 app.get("/", (req, res) => {

@@ -2,13 +2,13 @@ const Reservation = require("../models/reservationModel");
 
 exports.addReservation = async (req, res) => {
     try {
-        const { user_id, car_id, start_date, end_date, total_price, status } = req.body;
+        const { user_id, car_id, order_date, total_price, payment_mode, status } = req.body;
 
-        if (!user_id || !car_id || !start_date || !end_date || !total_price) {
-            return res.status(400).json({ message: "All fields (user_id, car_id, start_date, end_date, total_price) are required!" });
+        if (!user_id || !car_id || !order_date || !total_price || !payment_mode) {
+            return res.status(400).json({ message: "All fields (user_id, car_id, order_date, total_price, payment_mode) are required!" });
         }
 
-        const reservationId = await Reservation.addReservation({ user_id, car_id, start_date, end_date, total_price, status });
+        const reservationId = await Reservation.addReservation({ user_id, car_id, order_date, total_price, payment_mode, status });
         res.status(201).json({ message: "Reservation added successfully!", reservationId });
 
     } catch (error) {
@@ -21,7 +21,6 @@ exports.getReservations = async (req, res) => {
     try {
         const reservations = await Reservation.getReservations();
         res.status(200).json(reservations);
-
     } catch (error) {
         console.error("❌ Database error:", error);
         res.status(500).json({ message: "Database error" });
@@ -38,7 +37,6 @@ exports.getReservationById = async (req, res) => {
         }
 
         res.status(200).json(reservation);
-
     } catch (error) {
         console.error("❌ Database error:", error);
         res.status(500).json({ message: "Database error" });
@@ -61,7 +59,6 @@ exports.updateReservation = async (req, res) => {
         }
 
         res.status(200).json({ message: "Reservation updated successfully!" });
-
     } catch (error) {
         console.error("❌ Database error:", error);
         res.status(500).json({ message: "Database error" });
@@ -79,7 +76,6 @@ exports.deleteReservation = async (req, res) => {
         }
 
         res.status(200).json({ message: "Reservation deleted successfully!" });
-
     } catch (error) {
         console.error("❌ Database error:", error);
         res.status(500).json({ message: "Database error" });

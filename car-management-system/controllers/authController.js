@@ -1,69 +1,68 @@
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const userModel = require("../models/userModel"); // Import userModel
 const db = require("../config/db");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
-const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key";
-
-// ✅ Register a new user
+// Register
 exports.register = async (req, res) => {
-    try {
-        const { name, email, password, phone, role } = req.body;
+  try {
+    const { name, email, password, role, phone } = req.body;  // Add phone here
 
-        if (!name || !email || !password || !phone || !role) {
-            return res.status(400).json({ error: "All fields are required!" });
-        }
-
-        // Check if user exists
-        const existingUser = await userModel.findByEmail(email);
-        if (existingUser) {
-            return res.status(400).json({ error: "Email already registered!" });
-        }
-
-        // Create new user
-        await userModel.createUser(name, email, password, phone, role);
-        res.status(201).json({ message: "User registered successfully!" });
-    } catch (error) {
-        console.error("Registration error:", error);
-        res.status(500).json({ error: "Server error during registration" });
+    if (!name || !email || !password || !role || !phone) {  // Validate phone too
+      return res.status(400).json({ message: "All fields including phone are required" });
     }
+
+    const [existing] = await db.execute("SELECT * FROM users WHERE email = ?", [email]);
+    if (existing.length > 0) {
+      return res.status(400).json({ message: "Email already registered" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await db.execute(
+      "INSERT INTO users (name, email, password, role, phone) VALUES (?, ?, ?, ?, ?)",  // Include phone here
+      [name, email, hashedPassword, role, phone]
+    );
+
+    res.status(201).json({ message: "User registered successfully" });
+  } catch (error) {
+    console.error("❌ Registration error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
-// ✅ User login
+
+// Login
 exports.login = async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        if (!email || !password) {
-            return res.status(400).json({ error: "Email and password are required!" });
-        }
+  try {
+    const { email, password } = req.body;
 
-        const user = await userModel.findByEmail(email);
-        if (!user) {
-            return res.status(401).json({ error: "Invalid credentials!" });
-        }
-
-        const validPassword = await bcrypt.compare(password, user.password);
-        if (!validPassword) {
-            return res.status(401).json({ error: "Invalid credentials!" });
-        }
-
-        // Generate JWT token
-        const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: "1h" });
-
-        res.status(200).json({ message: "Login successful!", token });
-    } catch (error) {
-        console.error("Login error:", error);
-        res.status(500).json({ error: "Server error during login" });
+    const [users] = await db.execute("SELECT * FROM users WHERE email = ?", [email]);
+    if (users.length === 0) {
+      return res.status(401).json({ message: "Invalid credentials" });
     }
+
+    const user = users[0];
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const token = jwt.sign(
+      { id: user.id,name:user.name, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    res.status(200).json({ token, user: { id: user.id, name: user.name, role: user.role } });
+  } catch (error) {
+    console.error("❌ Login error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
-// ✅ Logout (Token-based)
+// Logout (Stateless)
 exports.logout = async (req, res) => {
-    try {
-        // Clients should remove token on logout
-        res.status(200).json({ message: "Logout successful!" });
-    } catch (error) {
-        console.error("Logout error:", error);
-        res.status(500).json({ error: "Server error during logout" });
-    }
+  // This only works if you're storing JWTs in client-side localStorage or cookies.
+  // Client should simply delete the token.
+  res.status(200).json({ message: "Logged out successfully (token must be removed client-side)" });
 };

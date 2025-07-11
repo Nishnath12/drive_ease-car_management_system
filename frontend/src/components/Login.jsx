@@ -47,48 +47,41 @@ function Login() {
   };
 
   return (
-    <div className="driveease-login-container">
-      <div className="driveease-login-card">
-        <div className="driveease-logo">
-        <img src={logo} alt="DriveEase Logo" class="driveease-logo" />
-
+    <div className="auth-container">
+      <div className="auth-card">
+        <div className="auth-logo">
+          <img src={logo} alt="DriveEase Logo" />
         </div>
 
-        <h1>Welcome to DriveEase</h1>
-        <p className="driveease-subtitle">
-          Your journey begins with a simple login
-        </p>
+        <h1 className="auth-title">Welcome to DriveEase</h1>
+        <p className="auth-subtitle">Your journey begins with a simple login</p>
 
-        {error && <div className="driveease-error-message">{error}</div>}
-        
-        <form onSubmit={handleSubmit} className="driveease-form">
-          <div className="driveease-input-group">
+        {error && <div className="auth-error">{error}</div>}
+
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="form-group">
             <input
               type="email"
-              id="email"
               name="email"
+              placeholder="Email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="Email"
-              className="driveease-input"
               required
             />
           </div>
 
-          <div className="driveease-input-group">
+          <div className="form-group password-group">
             <input
               type={showPassword ? "text" : "password"}
-              id="password"
               name="password"
+              placeholder="Password"
               value={formData.password}
               onChange={handleChange}
-              placeholder="Password"
-              className="driveease-input"
               required
             />
-            <button 
-              type="button" 
-              className="driveease-toggle-password"
+            <button
+              type="button"
+              className="toggle-password"
               onClick={togglePasswordVisibility}
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
@@ -96,33 +89,17 @@ function Login() {
             </button>
           </div>
 
-          <div className="driveease-forgot-password">
-            <Link to="/forgot-password" className="driveease-link">Forgot Password?</Link>
+          <div className="forgot-link">
+            <Link to="/forgot-password">Forgot Password?</Link>
           </div>
 
-          <button type="submit" className="driveease-button" disabled={loading}>
+          <button type="submit" className="auth-button" disabled={loading}>
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 
-        <div className="driveease-separator">
-          <span>or continue with</span>
-        </div>
-
-        <div className="driveease-social-buttons">
-          <button className="driveease-social-button google">
-            <span className="driveease-social-icon">G</span>
-          </button>
-          <button className="driveease-social-button apple">
-            <span className="driveease-social-icon">apple</span>
-          </button>
-          <button className="driveease-social-button facebook">
-            <span className="driveease-social-icon">f</span>
-          </button>
-        </div>
-
-        <div className="driveease-signup">
-          <p>Don't have an account? <Link to="/register" className="driveease-link">Register now</Link></p>
+        <div className="auth-footer">
+          <p>Don't have an account? <Link to="/register">Register now</Link></p>
         </div>
       </div>
     </div>

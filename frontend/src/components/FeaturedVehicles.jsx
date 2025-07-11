@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import CarService from '../services/CarService';
+import '../styles/FeaturedVehicles.css';
 
 const FeaturedVehicles = ({ setActiveSection, user, setSelectedCar, isManageMode = false }) => {
   const [featuredCars, setFeaturedCars] = useState([]);
@@ -15,7 +16,7 @@ const FeaturedVehicles = ({ setActiveSection, user, setSelectedCar, isManageMode
     image: ''
   });
 
-  const canManageCars = user && ['supervisor', 'employee'].includes(user?.role);
+  const canManageCars = user && ['supervisor', 'employee'].includes(user.role);
 
   useEffect(() => {
     fetchCars();
@@ -32,7 +33,7 @@ const FeaturedVehicles = ({ setActiveSection, user, setSelectedCar, isManageMode
         year: car.year,
         price: car.price,
         formattedPrice: `₹${car.price.toLocaleString()}`,
-        image: car.image || '/default-car.jpg',
+        image: car.image || '../assets/drivee.jpg',
         availability: car.availability
       }));
       setFeaturedCars(cars);
@@ -46,10 +47,10 @@ const FeaturedVehicles = ({ setActiveSection, user, setSelectedCar, isManageMode
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setNewCar({
-      ...newCar,
+    setNewCar(prev => ({
+      ...prev,
       [name]: type === 'checkbox' ? checked : value
-    });
+    }));
   };
 
   const handleAddCar = async (e) => {
@@ -66,7 +67,7 @@ const FeaturedVehicles = ({ setActiveSection, user, setSelectedCar, isManageMode
         year: new Date().getFullYear(),
         price: '',
         availability: true,
-        image: ''
+        image: ''||'../assets/drivee.jpg',
       });
       setShowAddCarForm(false);
       fetchCars();
@@ -97,83 +98,78 @@ const FeaturedVehicles = ({ setActiveSection, user, setSelectedCar, isManageMode
   if (error) return <div className="error-message">{error}</div>;
 
   return (
-    <section className="featured-cars section">
-      <div className="section-header">
+    <section className="featured-vehicles">
+      <div className="fv-header">
         <h2>{isManageMode ? 'Manage Vehicles' : 'Available Models'}</h2>
         {canManageCars && (
-          <button
-            className="add-car-btn"
-            onClick={() => setShowAddCarForm(!showAddCarForm)}
-          >
-            {showAddCarForm ? 'Cancel' : 'Add New Vehicle'}
+          <button className="btn btn-primary" onClick={() => setShowAddCarForm(!showAddCarForm)}>
+            {showAddCarForm ? 'Cancel' : 'Add Vehicle'}
           </button>
         )}
       </div>
 
       {showAddCarForm && canManageCars && (
-        <div className="add-car-form">
-          <h3>Add New Vehicle</h3>
-          <form onSubmit={handleAddCar}>
-            <div className="form-group">
-              <label htmlFor="brand">Brand</label>
-              <input type="text" id="brand" name="brand" value={newCar.brand} onChange={handleInputChange} required />
-            </div>
-            <div className="form-group">
-              <label htmlFor="model">Model</label>
-              <input type="text" id="model" name="model" value={newCar.model} onChange={handleInputChange} required />
-            </div>
-            <div className="form-group">
-              <label htmlFor="year">Year</label>
-              <input type="number" id="year" name="year" min="1900" max={new Date().getFullYear() + 1} value={newCar.year} onChange={handleInputChange} required />
-            </div>
-            <div className="form-group">
-              <label htmlFor="price">Price (₹)</label>
-              <input type="number" id="price" name="price" min="0" step="0.01" value={newCar.price} onChange={handleInputChange} required />
-            </div>
-            <div className="form-group">
-              <label htmlFor="image">Image URL</label>
-              <input type="text" id="image" name="image" value={newCar.image} onChange={handleInputChange} placeholder="https://example.com/car.jpg" />
-            </div>
-            <div className="form-group checkbox">
-              <label htmlFor="availability">Available</label>
-              <input type="checkbox" id="availability" name="availability" checked={newCar.availability} onChange={handleInputChange} />
-            </div>
-            <button type="submit" className="submit-btn">Add Vehicle</button>
-          </form>
-        </div>
+        <form className="fv-form" onSubmit={handleAddCar}>
+          <div className="form-group">
+            <label htmlFor="brand">Brand</label>
+            <input type="text" id="brand" name="brand" value={newCar.brand} onChange={handleInputChange} required />
+          </div>
+          <div className="form-group">
+            <label htmlFor="model">Model</label>
+            <input type="text" id="model" name="model" value={newCar.model} onChange={handleInputChange} required />
+          </div>
+          <div className="form-group">
+            <label htmlFor="year">Year</label>
+            <input type="number" id="year" name="year" min="1900" max={new Date().getFullYear() + 1} value={newCar.year} onChange={handleInputChange} required />
+          </div>
+          <div className="form-group">
+            <label htmlFor="price">Price (₹)</label>
+            <input type="number" id="price" name="price" min="0" step="0.01" value={newCar.price} onChange={handleInputChange} required />
+          </div>
+          <div className="form-group">
+            <label htmlFor="image">Image URL</label>
+            <input type="text" id="image" name="image" value={newCar.image} onChange={handleInputChange} placeholder="https://example.com/car.jpg" />
+          </div>
+          <div className="form-group checkbox">
+            <label htmlFor="availability">Available</label>
+            <input type="checkbox" id="availability" name="availability" checked={newCar.availability} onChange={handleInputChange} />
+          </div>
+          <button type="submit" className="btn btn-success">Add Vehicle</button>
+        </form>
       )}
 
-      <div className="cars-grid">
+      <div className="fv-grid">
         {featuredCars.length > 0 ? (
           featuredCars.map(car => (
-            <div className="car-card" key={car.id}>
-              <img src={car.image} alt={`${car.brand} ${car.name}`} />
-              <div className="car-info">
-                <h2>{car.name}</h2>
-                <div className="car-brand">{car.brand}</div>
-                <div className="car-year">{car.year}</div>
-                <div className="car-price">{car.formattedPrice}</div>
-                <div className="car-availability">
-                  {car.availability ? 'Available' : 'Not Available'}
+            <div className="fv-card" key={car.id}>
+              <img className="fv-image" src={car.image} alt={`${car.brand} ${car.name}`} />
+              <div className="fv-details">
+                <h3>{car.brand} {car.name}</h3>
+                <div className="fv-meta">
+                  <span>{car.year}</span>
+                  <span>{car.formattedPrice}</span>
                 </div>
-                <div className="car-actions">
+                <span className={`fv-availability ${car.availability ? 'available' : 'unavailable'}`}>
+                  {car.availability ? 'Available' : 'Unavailable'}
+                </span>
+                <div className="fv-actions">
                   {user?.role === 'customer' && car.availability && (
-                    <button className="test-drive-btn" onClick={() => handleSelectCar(car, 'testdrive')}>
+                    <button className="btn test-drive-btn" onClick={() => handleSelectCar(car, 'testdrive')}>
                       Book Test Drive
                     </button>
                   )}
                   {user?.role === 'customer' && (
-                    <button className="book-car-btn" onClick={() => handleSelectCar(car, 'bookings')}>
+                    <button className="btn book-car-btn" onClick={() => handleSelectCar(car, 'bookings')}>
                       Book Now
                     </button>
                   )}
                   {canManageCars && (
-                    <button className="edit-btn" onClick={() => alert('Edit functionality to be implemented')}>
+                    <button className="btn edit-btn" onClick={() => alert('Edit functionality to be implemented')}>
                       Edit
                     </button>
                   )}
                   {user?.role === 'supervisor' && (
-                    <button className="delete-btn" onClick={() => handleDeleteCar(car.id)}>
+                    <button className="btn delete-btn" onClick={() => handleDeleteCar(car.id)}>
                       Delete
                     </button>
                   )}

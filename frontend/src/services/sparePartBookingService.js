@@ -14,7 +14,7 @@ const SparePartBookingService = {
 
   // Get all bookings (Admin/Employee)
   getAllBookings: async () => {
-    return await api.get('/spare-bookings');
+    return await api.get('/spare-bookings/all');
   }
 };
 

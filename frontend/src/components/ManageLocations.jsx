@@ -1,6 +1,8 @@
 // src/components/ManageLocations.jsx
 import React, { useState, useEffect } from 'react';
 import LocationService from '../services/LocationService';
+import '../styles/ManageLocations.css';
+
 
 const ManageLocations = () => {
   const [locations, setLocations] = useState([]);
@@ -43,6 +45,7 @@ const ManageLocations = () => {
       setForm({ name: '', address: '', phone: '', hours: '' });
       fetchLocations();
     } catch (err) {
+      console.error(err); // Add this
       setError('Failed to add location.');
     }
   };
@@ -78,7 +81,7 @@ const ManageLocations = () => {
         <ul className="locations-list">
           {locations.map(loc => (
             <li key={loc.id}>
-              <strong>{loc.name}</strong>: {loc.address} | {loc.phone} | {loc.hours}
+              <strong>{loc.id}: {loc.name}</strong>: {loc.address} | {loc.phone} | {loc.hours}
             </li>
           ))}
         </ul>

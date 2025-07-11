@@ -11,6 +11,6 @@ router.post("/", auth.verifyToken, controller.bookSparePart);
 router.get("/my", auth.verifyToken, controller.getUserBookings);
 
 // Admin/Employee get all bookings
-router.get("/", auth.verifyToken, auth.checkEmployee, controller.getAllBookings);
+router.get("/all", auth.verifyToken, controller.getAllBookings);
 
 module.exports = router;

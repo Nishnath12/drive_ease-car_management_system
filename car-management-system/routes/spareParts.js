@@ -7,7 +7,7 @@ const authMiddleware = require("../middleware/authMiddleware");
 router.post("/", authMiddleware.verifyToken, authMiddleware.checkEmployee, sparePartsController.addSparePart);
 
 // Get all spare parts (Only Employees)
-router.get("/", authMiddleware.verifyToken, authMiddleware.checkEmployee, sparePartsController.getSpareParts);
+router.get("/", authMiddleware.verifyToken, sparePartsController.getSpareParts);
 
 // Get a spare part by ID (Only Employees)
 router.get("/:id", authMiddleware.verifyToken, authMiddleware.checkEmployee, sparePartsController.getSparePartById);

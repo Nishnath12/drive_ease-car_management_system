@@ -2,7 +2,20 @@
 import React, { useState, useEffect } from 'react';
 import CarService from '../services/CarService';
 import LocationService from '../services/LocationService';
-import ReservationService from '../services/ReservationService';
+import TestDriveService from '../services/TestDriveService';
+
+const timeSlots = {
+  1: '09:00 AM - 09:30 AM',
+  2: '09:30 AM - 10:00 AM',
+  3: '10:00 AM - 10:30 AM',
+  4: '10:30 AM - 11:00 AM',
+  5: '11:00 AM - 11:30 AM',
+  6: '11:30 AM - 12:00 PM',
+  7: '01:00 PM - 01:30 PM',
+  8: '01:30 PM - 02:00 PM',
+  9: '02:00 PM - 02:30 PM',
+  10: '02:30 PM - 03:00 PM'
+};
 
 const TestDrive = ({ user }) => {
   const [featuredCars, setFeaturedCars] = useState([]);
@@ -11,7 +24,7 @@ const TestDrive = ({ user }) => {
     car: '',
     location: '',
     date: '',
-    time: '',
+    slot: '',
     comments: ''
   });
   const [loading, setLoading] = useState(true);
@@ -27,7 +40,7 @@ const TestDrive = ({ user }) => {
           CarService.getAllCars(),
           LocationService.getAllLocations()
         ]);
-        
+
         const cars = carsResponse.data.map(car => ({
           id: car.id,
           name: car.model,
@@ -35,7 +48,7 @@ const TestDrive = ({ user }) => {
           price: `$${car.price.toLocaleString()}`,
           availability: car.availability
         }));
-        
+
         const locs = locationsResponse.data.map(loc => ({
           id: loc.id,
           name: loc.name,
@@ -43,7 +56,7 @@ const TestDrive = ({ user }) => {
           phone: loc.phone,
           hours: '9AM-6PM'
         }));
-        
+
         setFeaturedCars(cars);
         setLocations(locs);
       } catch (err) {
@@ -53,7 +66,7 @@ const TestDrive = ({ user }) => {
         setLoading(false);
       }
     };
-    
+
     fetchData();
   }, []);
 
@@ -76,24 +89,24 @@ const TestDrive = ({ user }) => {
         user_id: user.id,
         car_id: parseInt(testDriveForm.car),
         location_id: parseInt(testDriveForm.location),
-        start_date: `${testDriveForm.date} ${testDriveForm.time}`,
-        end_date: `${testDriveForm.date} ${testDriveForm.time}`,
-        total_price: 0,
+        preferred_date: testDriveForm.date,
+        slot_number: parseInt(testDriveForm.slot),
         status: 'pending',
-        description: testDriveForm.comments || 'Test drive request'
+        comments: testDriveForm.comments || 'Test drive request'
       };
 
-      await ReservationService.addReservation(testDriveData);
+      await TestDriveService.bookTestDrive(testDriveData);
       setTestDriveSuccess('Test drive booked successfully! We will contact you to confirm.');
       setTestDriveForm({
         car: '',
         location: '',
         date: '',
-        time: '',
+        slot: '',
         comments: ''
       });
     } catch (err) {
-      setTestDriveSuccess('Test drive booked successfully! We will contact you to confirm.');
+      console.error(err);
+      setTestDriveError('Failed to book test drive. Please try again.');
     } finally {
       setTestDriveSubmitting(false);
     }
@@ -108,6 +121,7 @@ const TestDrive = ({ user }) => {
       <h2>Schedule Your Test Drive</h2>
       {testDriveSuccess && <div className="success-message">{testDriveSuccess}</div>}
       {testDriveError && <div className="error-message">{testDriveError}</div>}
+
       <form onSubmit={handleTestDriveSubmit} className="testdrive-form">
         <div className="form-group">
           <label htmlFor="car">Select a Vehicle</label>
@@ -126,7 +140,7 @@ const TestDrive = ({ user }) => {
             ))}
           </select>
         </div>
-        
+
         <div className="form-group">
           <label htmlFor="location">Preferred Location</label>
           <select
@@ -144,7 +158,7 @@ const TestDrive = ({ user }) => {
             ))}
           </select>
         </div>
-        
+
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="date">Preferred Date</label>
@@ -158,19 +172,26 @@ const TestDrive = ({ user }) => {
               min={new Date().toISOString().split('T')[0]}
             />
           </div>
+
           <div className="form-group">
-            <label htmlFor="time">Preferred Time</label>
-            <input
-              type="time"
-              id="time"
-              name="time"
-              value={testDriveForm.time}
+            <label htmlFor="slot">Preferred Time Slot</label>
+            <select
+              id="slot"
+              name="slot"
+              value={testDriveForm.slot}
               onChange={handleTestDriveChange}
               required
-            />
+            >
+              <option value="">-- Select Time Slot --</option>
+              {Object.entries(timeSlots).map(([slotNumber, slotLabel]) => (
+                <option key={slotNumber} value={slotNumber}>
+                  {slotLabel}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
-        
+
         <div className="form-group">
           <label htmlFor="comments">Additional Comments (Optional)</label>
           <textarea
@@ -182,7 +203,7 @@ const TestDrive = ({ user }) => {
             placeholder="Any specific requirements or questions?"
           />
         </div>
-        
+
         <button type="submit" disabled={testDriveSubmitting} className="submit-btn">
           {testDriveSubmitting ? 'Scheduling...' : 'Schedule Test Drive'}
         </button>

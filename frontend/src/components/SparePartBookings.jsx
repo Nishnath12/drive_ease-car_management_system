@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import SparePartBookingService from '../services/sparePartBookingService';
 import SparePartsService from '../services/SparePartsService';
+import '../styles/SparePartBookings.css';
+
 
 const SparePartBookings = ({ user }) => {
   const [sparePartBookings, setSparePartBookings] = useState([]);
@@ -158,7 +160,7 @@ const SparePartBookings = ({ user }) => {
                   <option value="">-- Select a Spare Part --</option>
                   {spareParts.map(part => (
                     <option key={part.id} value={part.id}>
-                      {part.name} - {part.brand} - ${part.price}/unit
+                      {part.name} - {part.brand} - ₹{part.price}/unit
                     </option>
                   ))}
                 </select>
@@ -184,10 +186,10 @@ const SparePartBookings = ({ user }) => {
                   <strong>Price Summary:</strong>
                 </p>
                 <p>
-                  Unit Price: ${spareParts.find(part => part.id === parseInt(newBooking.spare_part_id))?.price || 0}
+                  Unit Price: ₹{spareParts.find(part => part.id === parseInt(newBooking.spare_part_id))?.price || 0}
                 </p>
                 <p>
-                  <strong>Total Price: ${((spareParts.find(part => part.id === parseInt(newBooking.spare_part_id))?.price || 0) * newBooking.quantity).toFixed(2)}</strong>
+                  <strong>Total Price: ₹{((spareParts.find(part => part.id === parseInt(newBooking.spare_part_id))?.price || 0) * newBooking.quantity).toFixed(2)}</strong>
                 </p>
               </div>
             )}
@@ -226,10 +228,10 @@ const SparePartBookings = ({ user }) => {
                 <strong>Quantity:</strong> {booking.quantity}
               </p>
               <p>
-                <strong>Unit Price:</strong> ${booking.price || 0}
+                <strong>Unit Price:</strong> ₹{booking.price || 0}
               </p>
               <p>
-                <strong>Total Price:</strong> ${((booking.price || 0) * booking.quantity).toFixed(2)}
+                <strong>Total Price:</strong> ₹{((booking.price || 0) * booking.quantity).toFixed(2)}
               </p>
               <p>
                 <strong>Status:</strong> {booking.status || 'Pending'}

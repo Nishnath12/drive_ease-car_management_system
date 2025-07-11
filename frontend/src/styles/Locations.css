@@ -1,0 +1,110 @@
+.locations-section {
+  padding: 2rem;
+  background-color: #f9f9f9;
+  min-height: 100vh;
+}
+
+.location-header {
+  text-align: center;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.location-header h2 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.location-id {
+  display: block;
+  font-size: 0.9rem;
+  color: #777;
+  margin-top: 0.3rem;
+}
+
+.section-title {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #222;
+  font-size: 2rem;
+}
+
+.locations-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.location-card {
+  background-color: #fff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s;
+}
+
+.location-card:hover {
+  transform: translateY(-5px);
+}
+
+.location-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.location-id {
+  font-size: 0.85rem;
+  color: #777;
+}
+
+.location-address {
+  font-style: italic;
+  color: #555;
+  margin: 0.5rem 0;
+}
+
+.location-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.view-btn {
+  background-color: #555;
+  color: white;
+}
+
+.book-btn {
+  background-color: #007bff;
+  color: white;
+}
+
+.book-btn:hover {
+  background-color: #0056b3;
+}
+
+.view-btn:hover {
+  background-color: #333;
+}
+
+.section-loading,
+.error-message {
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.2rem;
+  color: #333;
+}

@@ -1,0 +1,26 @@
+/* Additional styles for new inputs */
+.car-bookings{
+   background: linear-gradient(to right, #eaf6ff, #f7f9fb);
+}
+.booking-form input[type="text"],
+.booking-form input[type="number"],
+.booking-form select {
+  font-size: 1rem;
+  padding: 0.6rem 0.8rem;
+  border: 1.5px solid #ccc;
+  border-radius: 5px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.3s ease;
+}
+
+.booking-form input[type="text"]:focus,
+.booking-form input[type="number"]:focus,
+.booking-form select:focus {
+  border-color: #3498db;
+  outline: none;
+}
+
+.booking-tabs{
+   background: linear-gradient(to right, #eaf6ff, #f7f9fb);
+}

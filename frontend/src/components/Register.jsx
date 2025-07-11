@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import AuthService from '../services/AuthService';
+import '../styles/register.css'; // Make sure this path is correct
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -9,7 +10,7 @@ function Register() {
     password: '',
     confirmPassword: '',
     phone: '',
-    role: 'employee' // Default role
+    role: 'employee'
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,17 +18,16 @@ function Register() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       [name]: value
-    });
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    
-    // Form validation
+
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match!');
       return;
@@ -44,7 +44,6 @@ function Register() {
       const { name, email, password, phone, role } = formData;
       const response = await AuthService.register(name, email, password, phone, role);
       console.log('Registration successful:', response);
-      // Redirect to login page after successful registration with replace to prevent going back
       navigate('/login', { replace: true });
     } catch (err) {
       console.error('Registration error:', err);
@@ -57,8 +56,9 @@ function Register() {
   return (
     <div className="register-container">
       <h2>Create Account</h2>
-      {error && <div className="error-message">{error}</div>}
       
+      {error && <div className="error-message">{error}</div>}
+
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label htmlFor="name">Full Name</label>
@@ -73,7 +73,7 @@ function Register() {
         </div>
 
         <div className="form-group">
-          <label htmlFor="email">Email</label>
+          <label htmlFor="email">Email Address</label>
           <input
             type="email"
             id="email"
@@ -121,7 +121,7 @@ function Register() {
         </div>
 
         <div className="form-group">
-          <label htmlFor="role">Role</label>
+          <label htmlFor="role">Select Role</label>
           <select
             id="role"
             name="role"
