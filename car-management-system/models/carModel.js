@@ -1,28 +1,37 @@
 const db = require("../config/db");
 
 const Car = {
-    // Add a new car
-    addCar: async ({ model, brand, year, price, availability = 1, image = null }) => {
-        const query = `
-            INSERT INTO cars (model, brand, year, price, availability, image) 
-            VALUES (?, ?, ?, ?, ?, ?)
-        `;
-        const values = [model, brand, year, price, availability, image];
-        const [result] = await db.execute(query, values);
-        return result.insertId;
-    },
+  addCar: async ({ model, brand, year, price, availability = 1, image = null }) => {
+    const [result] = await db.execute(
+      "INSERT INTO cars (model, brand, year, price, availability, image) VALUES (?, ?, ?, ?, ?, ?)",
+      [model, brand, year, price, availability, image]
+    );
+    return result.insertId;
+  },
 
-    // Get all cars
-    getCars: async () => {
-        const [results] = await db.execute("SELECT * FROM cars");
-        return results;
-    },
+  getCars: async () => {
+    const [results] = await db.execute("SELECT * FROM cars ORDER BY id DESC");
+    return results;
+  },
 
-    // Delete a car by ID
-    deleteCar: async (id) => {
-        const [result] = await db.execute("DELETE FROM cars WHERE id = ?", [id]);
-        return result.affectedRows;
-    }
+  getCarById: async (id) => {
+    const [results] = await db.execute("SELECT * FROM cars WHERE id = ?", [id]);
+    return results[0] || null;
+  },
+
+  updateCar: async (id, data) => {
+    const { model, brand, year, price, availability, image } = data;
+    const [result] = await db.execute(
+      "UPDATE cars SET model = ?, brand = ?, year = ?, price = ?, availability = ?, image = ? WHERE id = ?",
+      [model, brand, year, price, availability ?? 1, image ?? null, id]
+    );
+    return result.affectedRows;
+  },
+
+  deleteCar: async (id) => {
+    const [result] = await db.execute("DELETE FROM cars WHERE id = ?", [id]);
+    return result.affectedRows;
+  }
 };
 
 module.exports = Car;
