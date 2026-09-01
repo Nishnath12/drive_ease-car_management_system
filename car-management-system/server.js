@@ -4,31 +4,23 @@ const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 
- // ✅ define it
- // ✅
-
-// Load environment variables
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const NODE_ENV = process.env.NODE_ENV || "development";
 
-// Middleware
 app.use(helmet());
 app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST", "PUT", "DELETE"]
+  origin: process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',').map(value => value.trim()) : true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Logging middleware for development
-if (NODE_ENV === "development") {
-  app.use(morgan("dev"));
-}
+if (NODE_ENV !== "test") app.use(morgan(NODE_ENV === "development" ? "dev" : "combined"));
 
-// Import routes
 const authRoutes = require("./routes/auth");
 const carRoutes = require("./routes/cars");
 const locationRoutes = require("./routes/locations");
@@ -38,7 +30,9 @@ const sparePartsRoutes = require("./routes/spareParts");
 const sparePartBookingRoutes = require("./routes/sparePartBooking");
 const testDriveRoutes = require("./routes/testDriveRoutes");
 
-// Use routes
+app.get("/health", (req, res) => res.status(200).json({ status: "ok", service: "car-management-system" }));
+app.get("/api/health", (req, res) => res.status(200).json({ status: "ok", service: "car-management-system" }));
+
 app.use("/api/auth", authRoutes);
 app.use("/api/cars", carRoutes);
 app.use("/api/locations", locationRoutes);
@@ -48,28 +42,15 @@ app.use("/api/spare-parts", sparePartsRoutes);
 app.use("/api/spare-bookings", sparePartBookingRoutes);
 app.use("/api/testdrives", testDriveRoutes);
 
-// Welcome route
-app.get("/", (req, res) => {
-  res.json({ message: "Welcome to the Car Management System API" });
-});
-
-// 404 handler for undefined routes
-app.use((req, res) => {
-  res.status(404).json({ message: "Route not found" });
-});
-
-// Global error handler
+app.get("/", (req, res) => res.json({ message: "Welcome to the Car Management System API" }));
+app.use((req, res) => res.status(404).json({ message: "Route not found" }));
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ 
-    message: "Something went wrong!", 
-    error: process.env.NODE_ENV === "development" ? err.message : undefined 
-  });
+  console.error(err.stack || err);
+  res.status(500).json({ message: "Something went wrong!" });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running in ${NODE_ENV} mode on port ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => console.log(`Server running in ${NODE_ENV} mode on port ${PORT}`));
+}
 
-module.exports = app; // Export for testing purposes
+module.exports = app;
