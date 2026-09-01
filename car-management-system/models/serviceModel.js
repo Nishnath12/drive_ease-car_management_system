@@ -1,88 +1,28 @@
 const db = require("../config/db");
 
 const Service = {
-    // Add a new service record
     addService: async ({ user_id, car_id, location_id, service_date, description, cost, status }) => {
-        const query = `
-            INSERT INTO services (user_id, car_id, location_id, service_date, description, cost, status) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        `;
-        const values = [user_id, car_id, location_id, service_date, description, cost, status || "pending"];
-        const [result] = await db.execute(query, values);
+        const [result] = await db.execute(`INSERT INTO services (user_id, car_id, location_id, service_date, description, cost, status) VALUES (?, ?, ?, ?, ?, ?, ?)`, [user_id, car_id, location_id, service_date, description, cost, status || "pending"]);
         return result.insertId;
     },
-
-    // Get all services
     getAllServices: async () => {
-        const query = `
-            SELECT s.*, l.name as location_name, l.address as location_address 
-            FROM services s
-            JOIN locations l ON s.location_id = l.id
-        `;
-        const [results] = await db.execute(query);
+        const [results] = await db.execute(`SELECT s.*, u.name AS user_name, CONCAT(c.brand, ' ', c.model) AS car_name, l.name AS location_name, l.address AS location_address FROM services s JOIN users u ON s.user_id=u.id JOIN cars c ON s.car_id=c.id JOIN locations l ON s.location_id=l.id ORDER BY s.created_at DESC`);
         return results;
     },
-
-    // Get a service by ID
     getServiceById: async (id) => {
-        const query = `
-            SELECT s.*, l.name as location_name, l.address as location_address 
-            FROM services s
-            JOIN locations l ON s.location_id = l.id
-            WHERE s.id = ?
-        `;
-        const [results] = await db.execute(query, [id]);
-        return results.length > 0 ? results[0] : null;
+        const [results] = await db.execute(`SELECT s.*, u.name AS user_name, CONCAT(c.brand, ' ', c.model) AS car_name, l.name AS location_name, l.address AS location_address FROM services s JOIN users u ON s.user_id=u.id JOIN cars c ON s.car_id=c.id JOIN locations l ON s.location_id=l.id WHERE s.id=?`, [id]);
+        return results[0] || null;
     },
-
-    // Get services by user ID
     getServicesByUserId: async (userId) => {
-        const query = `
-            SELECT s.*, l.name as location_name, l.address as location_address 
-            FROM services s
-            JOIN locations l ON s.location_id = l.id
-            WHERE s.user_id = ?
-        `;
-        const [results] = await db.execute(query, [userId]);
+        const [results] = await db.execute(`SELECT s.*, CONCAT(c.brand, ' ', c.model) AS car_name, l.name AS location_name, l.address AS location_address FROM services s JOIN cars c ON s.car_id=c.id JOIN locations l ON s.location_id=l.id WHERE s.user_id=? ORDER BY s.service_date DESC, s.created_at DESC`, [userId]);
         return results;
     },
-
-    // Get services by location ID
     getServicesByLocationId: async (locationId) => {
-        const query = `
-            SELECT s.*, l.name as location_name
-            FROM services s
-            JOIN locations l ON s.location_id = l.id
-            WHERE s.location_id = ?
-        `;
-        const [results] = await db.execute(query, [locationId]);
+        const [results] = await db.execute(`SELECT s.*, u.name AS user_name, CONCAT(c.brand, ' ', c.model) AS car_name, l.name AS location_name FROM services s JOIN users u ON s.user_id=u.id JOIN cars c ON s.car_id=c.id JOIN locations l ON s.location_id=l.id WHERE s.location_id=? ORDER BY s.service_date DESC`, [locationId]);
         return results;
     },
-
-    // Update service status
-    updateServiceStatus: async (id, status) => {
-        const query = "UPDATE services SET status = ? WHERE id = ?";
-        const [result] = await db.execute(query, [status, id]);
-        return result.affectedRows;
-    },
-
-    // Update service details
-    updateService: async (id, { location_id, service_date, description, cost, status }) => {
-        const query = `
-            UPDATE services 
-            SET location_id = ?, service_date = ?, description = ?, cost = ?, status = ?
-            WHERE id = ?
-        `;
-        const values = [location_id, service_date, description, cost, status, id];
-        const [result] = await db.execute(query, values);
-        return result.affectedRows;
-    },
-
-    // Delete a service
-    deleteService: async (id) => {
-        const [result] = await db.execute("DELETE FROM services WHERE id = ?", [id]);
-        return result.affectedRows;
-    }
+    updateServiceStatus: async (id, status) => { const [result] = await db.execute("UPDATE services SET status=? WHERE id=?", [status,id]); return result.affectedRows; },
+    updateService: async (id, {location_id,service_date,description,cost,status}) => { const [result] = await db.execute("UPDATE services SET location_id=?, service_date=?, description=?, cost=?, status=? WHERE id=?", [location_id,service_date,description,cost,status,id]); return result.affectedRows; },
+    deleteService: async (id) => { const [result] = await db.execute("DELETE FROM services WHERE id=?", [id]); return result.affectedRows; }
 };
-
 module.exports = Service;
