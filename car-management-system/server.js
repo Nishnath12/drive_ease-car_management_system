@@ -29,6 +29,7 @@ const serviceRoutes = require("./routes/service");
 const sparePartsRoutes = require("./routes/spareParts");
 const sparePartBookingRoutes = require("./routes/sparePartBooking");
 const testDriveRoutes = require("./routes/testDriveRoutes");
+const approveBookingsRoutes = require("./routes/approveBookingsRoutes");
 
 app.get("/health", (req, res) => res.status(200).json({ status: "ok", service: "car-management-system" }));
 app.get("/api/health", (req, res) => res.status(200).json({ status: "ok", service: "car-management-system" }));
@@ -37,6 +38,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/cars", carRoutes);
 app.use("/api/locations", locationRoutes);
 app.use("/api/reservations", reservationRoutes);
+app.use("/api/approve-bookings", approveBookingsRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/spare-parts", sparePartsRoutes);
 app.use("/api/spare-bookings", sparePartBookingRoutes);
