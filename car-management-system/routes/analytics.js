@@ -1,0 +1,1 @@
+const express=require('express');const router=express.Router();const controller=require('../controllers/analyticsController');const auth=require('../middleware/authMiddleware');router.get('/',auth.verifyToken,auth.checkEmployee,controller.dashboard);module.exports=router;
