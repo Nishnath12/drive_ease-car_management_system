@@ -1,150 +1,16 @@
 import { useState } from 'react';
+import { ArrowRight, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import AuthService from '../services/AuthService';
-import '../styles/register.css'; // Make sure this path is correct
+import '../styles/register.css';
+import logo from '../assets/drivee.jpg';
 
 function Register() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    phone: '',
-    role: 'employee'
-  });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({ name:'', email:'', password:'', confirmPassword:'', phone:'' });
+  const [error, setError] = useState(''); const [loading, setLoading] = useState(false); const [showPassword, setShowPassword] = useState(false); const [showConfirm, setShowConfirm] = useState(false);
   const navigate = useNavigate();
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match!');
-      return;
-    }
-
-    if (!formData.name || !formData.email || !formData.password || !formData.phone || !formData.role) {
-      setError('All fields are required!');
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const { name, email, password, phone, role } = formData;
-      const response = await AuthService.register(name, email, password, phone, role);
-      console.log('Registration successful:', response);
-      navigate('/login', { replace: true });
-    } catch (err) {
-      console.error('Registration error:', err);
-      setError(err.response?.data?.error || 'Registration failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="register-container">
-      <h2>Create Account</h2>
-      
-      {error && <div className="error-message">{error}</div>}
-
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="name">Full Name</label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="email">Email Address</label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="phone">Phone Number</label>
-          <input
-            type="tel"
-            id="phone"
-            name="phone"
-            value={formData.phone}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="password">Password</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="confirmPassword">Confirm Password</label>
-          <input
-            type="password"
-            id="confirmPassword"
-            name="confirmPassword"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="role">Select Role</label>
-          <select
-            id="role"
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
-            required
-          >
-            <option value="employee">Employee</option>
-            <option value="supervisor">Supervisor</option>
-            <option value="Customer">Customer</option>
-          </select>
-        </div>
-
-        <button type="submit" disabled={loading}>
-          {loading ? 'Registering...' : 'Register'}
-        </button>
-      </form>
-
-      <p>
-        Already have an account? <Link to="/login">Login here</Link>
-      </p>
-    </div>
-  );
+  const handleChange = e => setFormData(prev => ({...prev,[e.target.name]:e.target.value}));
+  const handleSubmit = async e => { e.preventDefault(); setError(''); const {name,email,password,confirmPassword,phone}=formData; if(!name||!email||!password||!confirmPassword||!phone)return setError('Complete all fields to create your account.'); if(password!==confirmPassword)return setError('Passwords do not match.'); if(password.length<8)return setError('Use at least 8 characters for your password.'); setLoading(true); try{await AuthService.register(name.trim(),email.trim(),password,phone.trim(),'customer');navigate('/login',{replace:true});}catch(err){setError(err.response?.data?.message||err.response?.data?.error||'We could not create your account. Please try again.');}finally{setLoading(false)} };
+  return <main className="register-page"><section className="register-side"><div className="register-brand"><img src={logo} alt="DriveEase"/><strong>DriveEase</strong></div><div><span className="register-pill">Customer account</span><h1>Start your<br/><em>DriveEase journey.</em></h1><p>One account for vehicles, test drives, service appointments, bookings and showroom support.</p></div><div className="register-note"><ShieldCheck size={18}/><span><strong>Your account is protected</strong><small>Secure authentication and role-based access</small></span></div></section><section className="register-panel"><div className="register-wrap"><div className="register-mobile-brand"><img src={logo} alt="DriveEase"/><strong>DriveEase</strong></div><span className="register-kicker">Create your account</span><h2>Welcome to DriveEase</h2><p className="register-subtitle">Set up your customer profile in less than a minute.</p>{error&&<div className="register-error" role="alert">{error}</div>}<form className="register-form" onSubmit={handleSubmit}><div className="field-row"><div className="field"><label htmlFor="name">Full name</label><input id="name" name="name" autoComplete="name" placeholder="Your full name" value={formData.name} onChange={handleChange} required/></div><div className="field"><label htmlFor="phone">Phone number</label><input id="phone" name="phone" type="tel" autoComplete="tel" placeholder="10-digit mobile" value={formData.phone} onChange={handleChange} required/></div></div><div className="field"><label htmlFor="email">Email address</label><input id="email" name="email" type="email" autoComplete="email" placeholder="you@example.com" value={formData.email} onChange={handleChange} required/></div><div className="field"><label htmlFor="password">Password</label><div className="register-password"><input id="password" name="password" type={showPassword?'text':'password'} autoComplete="new-password" placeholder="At least 8 characters" value={formData.password} onChange={handleChange} required/><button type="button" onClick={()=>setShowPassword(v=>!v)} aria-label="Toggle password visibility">{showPassword?<EyeOff size={17}/>:<Eye size={17}/>}</button></div></div><div className="field"><label htmlFor="confirmPassword">Confirm password</label><div className="register-password"><input id="confirmPassword" name="confirmPassword" type={showConfirm?'text':'password'} autoComplete="new-password" placeholder="Re-enter your password" value={formData.confirmPassword} onChange={handleChange} required/><button type="button" onClick={()=>setShowConfirm(v=>!v)} aria-label="Toggle confirmation visibility">{showConfirm?<EyeOff size={17}/>:<Eye size={17}/>}</button></div></div><button className="register-button" type="submit" disabled={loading}>{loading?<><span className="register-spinner"/> Creating account…</>:<>Create account <ArrowRight size={17}/></>}</button></form><p className="register-footer">Already have an account? <Link to="/login">Sign in</Link></p></div></section></main>;
 }
-
 export default Register;
