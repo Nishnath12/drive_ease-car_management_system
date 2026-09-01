@@ -1,188 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { CarFront, Check, Edit3, Plus, Search, Trash2, X } from 'lucide-react';
 import CarService from '../services/CarService';
 import '../styles/FeaturedVehicles.css';
 
-const FeaturedVehicles = ({ setActiveSection, user, setSelectedCar, isManageMode = false }) => {
-  const [featuredCars, setFeaturedCars] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [showAddCarForm, setShowAddCarForm] = useState(false);
-  const [newCar, setNewCar] = useState({
-    model: '',
-    brand: '',
-    year: new Date().getFullYear(),
-    price: '',
-    availability: true,
-    image: ''
-  });
+const emptyCar = () => ({ model:'', brand:'', year:new Date().getFullYear(), price:'', availability:true, image:'' });
+const fallbackImage = 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1200&q=80';
 
-  const canManageCars = user && ['supervisor', 'employee'].includes(user.role);
-
-  useEffect(() => {
-    fetchCars();
-  }, []);
-
-  const fetchCars = async () => {
-    setLoading(true);
-    try {
-      const response = await CarService.getAllCars();
-      const cars = response.data.map(car => ({
-        id: car.id,
-        name: car.model,
-        brand: car.brand,
-        year: car.year,
-        price: car.price,
-        formattedPrice: `₹${car.price.toLocaleString()}`,
-        image: car.image || '../assets/drivee.jpg',
-        availability: car.availability
-      }));
-      setFeaturedCars(cars);
-    } catch (err) {
-      console.error('Error fetching cars:', err);
-      setError('Error loading vehicles.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setNewCar(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-
-  const handleAddCar = async (e) => {
-    e.preventDefault();
-    try {
-      await CarService.addCar({
-        ...newCar,
-        price: Number(newCar.price),
-        year: Number(newCar.year)
-      });
-      setNewCar({
-        model: '',
-        brand: '',
-        year: new Date().getFullYear(),
-        price: '',
-        availability: true,
-        image: ''||'../assets/drivee.jpg',
-      });
-      setShowAddCarForm(false);
-      fetchCars();
-    } catch (err) {
-      console.error('Error adding car:', err);
-      setError('Failed to add vehicle.');
-    }
-  };
-
-  const handleDeleteCar = async (carId) => {
-    if (window.confirm('Are you sure you want to delete this vehicle?')) {
-      try {
-        await CarService.deleteCar(carId);
-        fetchCars();
-      } catch (err) {
-        console.error('Error deleting car:', err);
-        setError('Failed to delete vehicle.');
-      }
-    }
-  };
-
-  const handleSelectCar = (car, targetSection) => {
-    if (setSelectedCar) setSelectedCar(car);
-    setActiveSection(targetSection);
-  };
-
-  if (loading) return <div className="section-loading">Loading vehicles...</div>;
-  if (error) return <div className="error-message">{error}</div>;
-
-  return (
-    <section className="featured-vehicles">
-      <div className="fv-header">
-        <h2>{isManageMode ? 'Manage Vehicles' : 'Available Models'}</h2>
-        {canManageCars && (
-          <button className="btn btn-primary" onClick={() => setShowAddCarForm(!showAddCarForm)}>
-            {showAddCarForm ? 'Cancel' : 'Add Vehicle'}
-          </button>
-        )}
-      </div>
-
-      {showAddCarForm && canManageCars && (
-        <form className="fv-form" onSubmit={handleAddCar}>
-          <div className="form-group">
-            <label htmlFor="brand">Brand</label>
-            <input type="text" id="brand" name="brand" value={newCar.brand} onChange={handleInputChange} required />
-          </div>
-          <div className="form-group">
-            <label htmlFor="model">Model</label>
-            <input type="text" id="model" name="model" value={newCar.model} onChange={handleInputChange} required />
-          </div>
-          <div className="form-group">
-            <label htmlFor="year">Year</label>
-            <input type="number" id="year" name="year" min="1900" max={new Date().getFullYear() + 1} value={newCar.year} onChange={handleInputChange} required />
-          </div>
-          <div className="form-group">
-            <label htmlFor="price">Price (₹)</label>
-            <input type="number" id="price" name="price" min="0" step="0.01" value={newCar.price} onChange={handleInputChange} required />
-          </div>
-          <div className="form-group">
-            <label htmlFor="image">Image URL</label>
-            <input type="text" id="image" name="image" value={newCar.image} onChange={handleInputChange} placeholder="https://example.com/car.jpg" />
-          </div>
-          <div className="form-group checkbox">
-            <label htmlFor="availability">Available</label>
-            <input type="checkbox" id="availability" name="availability" checked={newCar.availability} onChange={handleInputChange} />
-          </div>
-          <button type="submit" className="btn btn-success">Add Vehicle</button>
-        </form>
-      )}
-
-      <div className="fv-grid">
-        {featuredCars.length > 0 ? (
-          featuredCars.map(car => (
-            <div className="fv-card" key={car.id}>
-              <img className="fv-image" src={car.image} alt={`${car.brand} ${car.name}`} />
-              <div className="fv-details">
-                <h3>{car.brand} {car.name}</h3>
-                <div className="fv-meta">
-                  <span>{car.year}</span>
-                  <span>{car.formattedPrice}</span>
-                </div>
-                <span className={`fv-availability ${car.availability ? 'available' : 'unavailable'}`}>
-                  {car.availability ? 'Available' : 'Unavailable'}
-                </span>
-                <div className="fv-actions">
-                  {user?.role === 'customer' && car.availability && (
-                    <button className="btn test-drive-btn" onClick={() => handleSelectCar(car, 'testdrive')}>
-                      Book Test Drive
-                    </button>
-                  )}
-                  {user?.role === 'customer' && (
-                    <button className="btn book-car-btn" onClick={() => handleSelectCar(car, 'bookings')}>
-                      Book Now
-                    </button>
-                  )}
-                  {canManageCars && (
-                    <button className="btn edit-btn" onClick={() => alert('Edit functionality to be implemented')}>
-                      Edit
-                    </button>
-                  )}
-                  {user?.role === 'supervisor' && (
-                    <button className="btn delete-btn" onClick={() => handleDeleteCar(car.id)}>
-                      Delete
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))
-        ) : (
-          <p>No vehicles currently available. Please check back later.</p>
-        )}
-      </div>
-    </section>
-  );
+const FeaturedVehicles = ({ setActiveSection, user, setSelectedCar, isManageMode=false }) => {
+  const [cars,setCars]=useState([]); const [loading,setLoading]=useState(true); const [error,setError]=useState(''); const [query,setQuery]=useState(''); const [filter,setFilter]=useState('all'); const [editing,setEditing]=useState(null); const [form,setForm]=useState(emptyCar()); const [saving,setSaving]=useState(false); const [confirming,setConfirming]=useState(null);
+  const canManage = ['employee','supervisor'].includes(String(user?.role||'').toLowerCase()); const isSupervisor=String(user?.role||'').toLowerCase()==='supervisor';
+  const fetchCars=async()=>{setLoading(true);setError('');try{const response=await CarService.getAllCars();setCars((response.data||[]).map(car=>({...car,price:Number(car.price||0)})));}catch(err){setError(err.response?.data?.message||'Unable to load vehicles right now.');}finally{setLoading(false)}};
+  useEffect(()=>{fetchCars()},[]);
+  const filtered=useMemo(()=>cars.filter(car=>{const text=`${car.brand} ${car.model} ${car.year}`.toLowerCase();return text.includes(query.toLowerCase())&&(filter==='all'||(filter==='available'?!!car.availability:!car.availability));}),[cars,query,filter]);
+  const openAdd=()=>{setForm(emptyCar());setEditing({mode:'add'});setError('')}; const openEdit=car=>{setForm({model:car.model||'',brand:car.brand||'',year:car.year||new Date().getFullYear(),price:car.price||'',availability:!!car.availability,image:car.image||''});setEditing(car)};
+  const save=async e=>{e.preventDefault();setSaving(true);setError('');try{const payload={...form,year:Number(form.year),price:Number(form.price)};if(editing?.mode==='add')await CarService.addCar(payload);else await CarService.updateCar(editing.id,payload);setEditing(null);await fetchCars()}catch(err){setError(err.response?.data?.message||'Could not save vehicle.');}finally{setSaving(false)}};
+  const remove=async()=>{if(!confirming)return;setSaving(true);try{await CarService.deleteCar(confirming.id);setConfirming(null);await fetchCars()}catch(err){setError(err.response?.data?.message||'Could not remove vehicle.')}finally{setSaving(false)}};
+  const select=(car,target)=>{setSelectedCar?.(car);setActiveSection?.(target)};
+  if(loading)return <div className="vehicle-page"><div className="vehicle-skeleton-grid">{[1,2,3,4].map(i=><div className="vehicle-skeleton" key={i}/>)}</div></div>;
+  return <section className="vehicle-page">
+    <header className="vehicle-header"><div><span className="section-kicker">{isManageMode?'Operations':'Catalogue'}</span><h1>{isManageMode?'Vehicle management':'Explore vehicles'}</h1><p>{isManageMode?'Keep the showroom catalogue accurate and ready for customers.':'Compare models, check availability and choose what happens next.'}</p></div>{canManage&&<button className="vehicle-primary" onClick={openAdd}><Plus size={17}/> Add vehicle</button>}</header>
+    {error&&<div className="vehicle-alert"><span>{error}</span><button onClick={()=>setError('')}><X size={15}/></button></div>}
+    <div className="vehicle-toolbar"><div className="vehicle-search"><Search size={17}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search brand, model or year…" aria-label="Search vehicles"/></div><div className="vehicle-filters"><button className={filter==='all'?'active':''} onClick={()=>setFilter('all')}>All <span>{cars.length}</span></button><button className={filter==='available'?'active':''} onClick={()=>setFilter('available')}>Available <span>{cars.filter(c=>c.availability).length}</span></button><button className={filter==='unavailable'?'active':''} onClick={()=>setFilter('unavailable')}>Unavailable <span>{cars.filter(c=>!c.availability).length}</span></button></div></div>
+    <div className="vehicle-grid">{filtered.length?filtered.map(car=><article className="vehicle-card" key={car.id}><div className="vehicle-image-wrap"><img src={car.image||fallbackImage} alt={`${car.brand} ${car.model}`} onError={e=>{e.currentTarget.src=fallbackImage}}/><span className={`vehicle-status ${car.availability?'available':'unavailable'}`}><i/>{car.availability?'Available':'Unavailable'}</span></div><div className="vehicle-body"><div className="vehicle-title"><div><span>{car.brand}</span><h3>{car.model}</h3></div><strong>₹{Number(car.price||0).toLocaleString('en-IN')}</strong></div><div className="vehicle-meta"><span>{car.year}</span><span>•</span><span>DriveEase catalogue</span></div><div className="vehicle-actions">{user?.role==='customer'&&<><button className="vehicle-secondary" disabled={!car.availability} onClick={()=>select(car,'testdrive')}>Test drive</button><button className="vehicle-primary small" onClick={()=>select(car,'bookings')}>Book now</button></>}{canManage&&<button className="icon-action" onClick={()=>openEdit(car)} aria-label={`Edit ${car.brand} ${car.model}`}><Edit3 size={16}/></button>}{isSupervisor&&<button className="icon-action danger" onClick={()=>setConfirming(car)} aria-label={`Delete ${car.brand} ${car.model}`}><Trash2 size={16}/></button>}</div></div></article>):<div className="vehicle-empty"><div><CarFront size={25}/></div><h3>No vehicles found</h3><p>Try a different search or filter.</p></div>}</div>
+    {editing&&<div className="modal-backdrop" onMouseDown={e=>e.target===e.currentTarget&&setEditing(null)}><form className="vehicle-modal" onSubmit={save}><div className="modal-head"><div><span className="section-kicker">Vehicle details</span><h2>{editing.mode==='add'?'Add vehicle':'Edit vehicle'}</h2></div><button type="button" className="modal-close" onClick={()=>setEditing(null)}><X size={18}/></button></div><div className="modal-grid"><label>Brand<input value={form.brand} onChange={e=>setForm({...form,brand:e.target.value})} required/></label><label>Model<input value={form.model} onChange={e=>setForm({...form,model:e.target.value})} required/></label><label>Year<input type="number" min="1900" max="2100" value={form.year} onChange={e=>setForm({...form,year:e.target.value})} required/></label><label>Price (₹)<input type="number" min="0" step="1" value={form.price} onChange={e=>setForm({...form,price:e.target.value})} required/></label><label className="full">Image URL<input value={form.image} onChange={e=>setForm({...form,image:e.target.value})} placeholder="https://…"/></label><label className="availability-toggle"><input type="checkbox" checked={form.availability} onChange={e=>setForm({...form,availability:e.target.checked})}/><span><strong>Available for booking</strong><small>Show this vehicle to customers</small></span></label></div><div className="modal-actions"><button type="button" className="vehicle-secondary" onClick={()=>setEditing(null)}>Cancel</button><button type="submit" className="vehicle-primary" disabled={saving}>{saving?'Saving…':<><Check size={16}/> Save changes</>}</button></div></form></div>}
+    {confirming&&<div className="modal-backdrop"><div className="confirm-modal"><div className="confirm-icon"><Trash2 size={21}/></div><h2>Remove this vehicle?</h2><p>This will remove <strong>{confirming.brand} {confirming.model}</strong> from the catalogue.</p><div className="modal-actions"><button className="vehicle-secondary" onClick={()=>setConfirming(null)}>Cancel</button><button className="danger-button" onClick={remove} disabled={saving}>{saving?'Removing…':'Remove vehicle'}</button></div></div></div>}
+  </section>;
 };
-
 export default FeaturedVehicles;
