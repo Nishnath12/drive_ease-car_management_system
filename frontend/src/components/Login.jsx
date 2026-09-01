@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ArrowRight, Eye, EyeOff, ShieldCheck, Sparkles } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import AuthService from '../services/AuthService';
 import '../styles/auth.css';
@@ -11,99 +12,42 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
+  const handleChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
+    e.preventDefault(); setError('');
+    if (!formData.email || !formData.password) return setError('Enter your email and password to continue.');
     setLoading(true);
-
-    try {
-      const { email, password } = formData;
-      if (!email || !password) {
-        setError('Email and password are required!');
-        setLoading(false);
-        return;
-      }
-
-      const response = await AuthService.login(email, password);
-      console.log('Login successful:', response);
-      setTimeout(() => {
-        navigate('/dashboard', { replace: true });
-      }, 100);
-    } catch (err) {
-      console.error('Login error:', err);
-      setError(err.response?.data?.error || 'Login failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
+    try { await AuthService.login(formData.email.trim(), formData.password); navigate('/dashboard', { replace: true }); }
+    catch (err) { setError(err.response?.data?.message || err.response?.data?.error || 'We could not sign you in. Check your details and try again.'); }
+    finally { setLoading(false); }
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <div className="auth-logo">
-          <img src={logo} alt="DriveEase Logo" />
+    <main className="auth-page">
+      <section className="auth-visual">
+        <div className="auth-visual-glow" />
+        <div className="auth-brand"><img src={logo} alt="DriveEase" /><strong>DriveEase</strong></div>
+        <div className="auth-visual-copy"><span className="auth-eyebrow"><Sparkles size={13}/> Smart mobility, simplified</span><h1>Your journey,<br/><em>beautifully managed.</em></h1><p>Explore vehicles, schedule test drives, book service and stay on top of every request from one focused workspace.</p></div>
+        <div className="auth-trust"><ShieldCheck size={18}/><span><strong>Secure by design</strong><small>Protected role-based access</small></span></div>
+      </section>
+      <section className="auth-panel">
+        <div className="auth-form-wrap">
+          <div className="mobile-brand"><img src={logo} alt="DriveEase"/><strong>DriveEase</strong></div>
+          <span className="auth-kicker">Welcome back</span>
+          <h2>Sign in to your workspace</h2>
+          <p className="auth-subtitle">Use your DriveEase account to continue.</p>
+          {error && <div className="auth-error" role="alert">{error}</div>}
+          <form onSubmit={handleSubmit} className="auth-form">
+            <label htmlFor="login-email">Email address</label>
+            <input id="login-email" type="email" name="email" autoComplete="email" placeholder="you@example.com" value={formData.email} onChange={handleChange} required />
+            <div className="password-label"><label htmlFor="login-password">Password</label></div>
+            <div className="password-field"><input id="login-password" type={showPassword ? 'text' : 'password'} name="password" autoComplete="current-password" placeholder="Enter your password" value={formData.password} onChange={handleChange} required/><button type="button" onClick={() => setShowPassword(v => !v)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={17}/> : <Eye size={17}/>}</button></div>
+            <button className="auth-button" type="submit" disabled={loading}>{loading ? <><span className="button-spinner"/> Signing in…</> : <>Sign in <ArrowRight size={17}/></>}</button>
+          </form>
+          <p className="auth-footer">New to DriveEase? <Link to="/register">Create a customer account</Link></p>
         </div>
-
-        <h1 className="auth-title">Welcome to DriveEase</h1>
-        <p className="auth-subtitle">Your journey begins with a simple login</p>
-
-        {error && <div className="auth-error">{error}</div>}
-
-        <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-group">
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group password-group">
-            <input
-              type={showPassword ? "text" : "password"}
-              name="password"
-              placeholder="Password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
-            <button
-              type="button"
-              className="toggle-password"
-              onClick={togglePasswordVisibility}
-              aria-label={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? "Hide" : "Show"}
-            </button>
-          </div>
-
-          <div className="forgot-link">
-            <Link to="/forgot-password">Forgot Password?</Link>
-          </div>
-
-          <button type="submit" className="auth-button" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
-        </form>
-
-        <div className="auth-footer">
-          <p>Don't have an account? <Link to="/register">Register now</Link></p>
-        </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }
-
 export default Login;
