@@ -7,17 +7,25 @@ const morgan = require("morgan");
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = Number(process.env.PORT) || 5000;
 const NODE_ENV = process.env.NODE_ENV || "development";
 
+app.set("trust proxy", 1);
+app.disable("x-powered-by");
 app.use(helmet());
+
+const configuredOrigins = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.split(",").map((value) => value.trim()).filter(Boolean)
+  : null;
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',').map(value => value.trim()) : true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  origin: configuredOrigins && configuredOrigins.length ? configuredOrigins : true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: false
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
 if (NODE_ENV !== "test") app.use(morgan(NODE_ENV === "development" ? "dev" : "combined"));
 
@@ -25,11 +33,11 @@ const authRoutes = require("./routes/auth");
 const carRoutes = require("./routes/cars");
 const locationRoutes = require("./routes/locations");
 const reservationRoutes = require("./routes/reservations");
+const approveBookingsRoutes = require("./routes/approveBookingsRoutes");
 const serviceRoutes = require("./routes/service");
 const sparePartsRoutes = require("./routes/spareParts");
 const sparePartBookingRoutes = require("./routes/sparePartBooking");
 const testDriveRoutes = require("./routes/testDriveRoutes");
-const approveBookingsRoutes = require("./routes/approveBookingsRoutes");
 
 app.get("/health", (req, res) => res.status(200).json({ status: "ok", service: "car-management-system" }));
 app.get("/api/health", (req, res) => res.status(200).json({ status: "ok", service: "car-management-system" }));
@@ -52,7 +60,7 @@ app.use((err, req, res, next) => {
 });
 
 if (require.main === module) {
-  app.listen(PORT, () => console.log(`Server running in ${NODE_ENV} mode on port ${PORT}`));
+  app.listen(PORT, "0.0.0.0", () => console.log(`Server running in ${NODE_ENV} mode on port ${PORT}`));
 }
 
 module.exports = app;
