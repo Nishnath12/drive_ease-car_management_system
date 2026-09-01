@@ -3,13 +3,10 @@ const router = express.Router();
 const carController = require("../controllers/carController");
 const authMiddleware = require("../middleware/authMiddleware");
 
-// Get all cars (Public Access)
 router.get("/", carController.getCars);
-
-// Add a car (Only Supervisor)
+router.get("/:id", carController.getCarById);
 router.post("/", authMiddleware.verifyToken, authMiddleware.checkSupervisor, carController.addCar);
-
-// Delete a car (Only Supervisor)
+router.put("/:id", authMiddleware.verifyToken, authMiddleware.checkSupervisor, carController.updateCar);
 router.delete("/:id", authMiddleware.verifyToken, authMiddleware.checkSupervisor, carController.deleteCar);
 
 module.exports = router;
