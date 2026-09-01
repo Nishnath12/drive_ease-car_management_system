@@ -1,94 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import ReservationService from '../services/ReservationService';
-import TestDriveService from '../services/TestDriveService';
-
-const ApproveBookings = () => {
-  const [bookings, setBookings] = useState([]);
-  const [testDrives, setTestDrives] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(null);
-  const [filter, setFilter] = useState('pending');
-
-  const fetchData = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [bookingRes, testDriveRes] = await Promise.all([
-        ReservationService.getAllReservations(),
-        TestDriveService.getAllTestDrives()
-      ]);
-      setBookings(Array.isArray(bookingRes.data) ? bookingRes.data : []);
-      setTestDrives(Array.isArray(testDriveRes.data) ? testDriveRes.data : []);
-    } catch (err) {
-      console.error('Error fetching bookings:', err);
-      setError(err.response?.data?.message || 'Failed to load bookings.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchData(); }, []);
-
-  const handleStatusChange = async (type, id, newStatus) => {
-    try {
-      if (type === 'car') {
-        await ReservationService.updateReservation(id, { status: newStatus });
-        setBookings(prev => prev.map(b => b.id === id ? { ...b, status: newStatus } : b));
-      } else {
-        await TestDriveService.updateTestDriveStatus(id, newStatus);
-        setTestDrives(prev => prev.map(td => td.id === id ? { ...td, status: newStatus } : td));
-      }
-      setSuccessMessage(`${type === 'car' ? 'Car booking' : 'Test drive'} #${id} updated to ${newStatus}.`);
-      setTimeout(() => setSuccessMessage(null), 3000);
-    } catch (err) {
-      console.error('Status update failed:', err);
-      setError(err.response?.data?.message || `Failed to update ${type} #${id}.`);
-      setTimeout(() => setError(null), 3000);
-    }
-  };
-
-  const filteredCarBookings = filter === 'all' ? bookings : bookings.filter(b => b.status === filter);
-  const filteredTestDrives = filter === 'all' ? testDrives : testDrives.filter(td => td.status === filter);
-
-  if (loading) return <div className="section-loading">Loading bookings...</div>;
-
-  return (
-    <section className="approve-bookings section">
-      <div className="section-header">
-        <h2>Manage Car Bookings</h2>
-        <div className="filter-controls">
-          {['all', 'pending', 'confirmed', 'canceled', 'completed', 'cancelled'].map(f => (
-            <button key={f} className={`filter-btn ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>
-              {f.charAt(0).toUpperCase() + f.slice(1)}
-            </button>
-          ))}
-        </div>
-      </div>
-      {successMessage && <div className="success-message">{successMessage}</div>}
-      {error && <div className="error-message">{error}</div>}
-
-      <h3>Car Purchase Bookings</h3>
-      {filteredCarBookings.length === 0 ? <p>No {filter} car bookings found.</p> : (
-        <div className="bookings-table-container"><table className="bookings-table"><thead><tr><th>ID</th><th>Customer</th><th>Car</th><th>Order Date</th><th>Payment</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-          {filteredCarBookings.map(booking => <tr key={booking.id} className={`status-${booking.status}`}>
-            <td>{booking.id}</td><td>{booking.user_name || `User-${booking.user_id}`}</td><td>{booking.car_name || `Car-${booking.car_id}`}</td><td>{new Date(booking.order_date).toLocaleDateString()}</td><td>{booking.payment_mode}</td><td><span className={`status-badge ${booking.status}`}>{booking.status}</span></td>
-            <td>{booking.status === 'pending' && <><button onClick={() => handleStatusChange('car', booking.id, 'confirmed')} className="approve-btn">Approve</button><button onClick={() => handleStatusChange('car', booking.id, 'canceled')} className="reject-btn">Reject</button></>}{booking.status === 'canceled' && <button onClick={() => handleStatusChange('car', booking.id, 'pending')} className="reconsider-btn">Reconsider</button>}</td>
-          </tr>)}
-        </tbody></table></div>
-      )}
-
-      <h3>Test Drive Bookings</h3>
-      {filteredTestDrives.length === 0 ? <p>No {filter} test drive bookings found.</p> : (
-        <div className="bookings-table-container"><table className="bookings-table"><thead><tr><th>ID</th><th>User</th><th>Car</th><th>Location</th><th>Date</th><th>Slot</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-          {filteredTestDrives.map(td => <tr key={td.id} className={`status-${td.status}`}>
-            <td>{td.id}</td><td>{td.user_name || `User-${td.user_id}`}</td><td>{td.car_name || `Car-${td.car_id}`}</td><td>{td.location_name || `Location-${td.location_id}`}</td><td>{new Date(td.preferred_date).toLocaleDateString()}</td><td>Slot {td.slot_number}</td><td><span className={`status-badge ${td.status}`}>{td.status}</span></td>
-            <td>{td.status === 'pending' && <><button onClick={() => handleStatusChange('testdrive', td.id, 'confirmed')} className="approve-btn">Approve</button><button onClick={() => handleStatusChange('testdrive', td.id, 'cancelled')} className="reject-btn">Reject</button></>}{td.status === 'cancelled' && <button onClick={() => handleStatusChange('testdrive', td.id, 'pending')} className="reconsider-btn">Reconsider</button>}</td>
-          </tr>)}
-        </tbody></table></div>
-      )}
-    </section>
-  );
-};
-
-export default ApproveBookings;
+import React,{useEffect,useMemo,useState} from 'react';
+import {CheckCircle2,ClipboardList,RefreshCw,XCircle} from 'lucide-react';import ReservationService from '../services/ReservationService';import TestDriveService from '../services/TestDriveService';import '../styles/ApproveBookings.css';
+const normalize=s=>String(s||'').toLowerCase().replace('canceled','cancelled');
+const ApproveBookings=()=>{const[bookings,setBookings]=useState([]),[testDrives,setTestDrives]=useState([]),[loading,setLoading]=useState(true),[error,setError]=useState(''),[success,setSuccess]=useState(''),[filter,setFilter]=useState('pending'),[updating,setUpdating]=useState(null);const fetchData=async()=>{setLoading(true);setError('');try{const[a,b]=await Promise.all([ReservationService.getAllReservations(),TestDriveService.getAllTestDrives()]);setBookings(Array.isArray(a.data)?a.data:[]);setTestDrives(Array.isArray(b.data)?b.data:[])}catch(err){setError(err.response?.data?.message||'Unable to load booking requests.')}finally{setLoading(false)}};useEffect(()=>{fetchData()},[]);
+ const update=async(type,id,status)=>{setUpdating(`${type}-${id}`);setError('');try{if(type==='car'){await ReservationService.updateReservation(id,{status});setBookings(p=>p.map(x=>x.id===id?{...x,status}:x))}else{await TestDriveService.updateTestDriveStatus(id,status);setTestDrives(p=>p.map(x=>x.id===id?{...x,status}:x))}setSuccess(`${type==='car'?'Car booking':'Test drive'} #${id} is now ${status}.`);setTimeout(()=>setSuccess(''),2800)}catch(err){setError(err.response?.data?.message||'Could not update this request.')}finally{setUpdating(null)}};
+ const filteredBookings=useMemo(()=>filter==='all'?bookings:bookings.filter(x=>normalize(x.status)===filter),[bookings,filter]);const filteredDrives=useMemo(()=>filter==='all'?testDrives:testDrives.filter(x=>normalize(x.status)===filter),[testDrives,filter]);const pending=bookings.filter(x=>normalize(x.status)==='pending').length+testDrives.filter(x=>normalize(x.status)==='pending').length;
+ if(loading)return <div className="ops-page"><div className="ops-loading">Loading operations…</div></div>;
+ return <section className="ops-page"><header className="ops-header"><div><span className="section-kicker">Operations</span><h1>Booking queue</h1><p>Review requests, approve appointments and keep customers moving.</p></div><button className="ops-refresh" onClick={fetchData}><RefreshCw size={15}/> Refresh</button></header>{error&&<div className="ops-message error"><XCircle size={17}/>{error}</div>}{success&&<div className="ops-message success"><CheckCircle2 size={17}/>{success}</div>}<div className="ops-stats"><div><ClipboardList size={18}/><span><strong>{pending}</strong><small>Needs attention</small></span></div><div><strong>{bookings.length}</strong><small>Car bookings</small></div><div><strong>{testDrives.length}</strong><small>Test drives</small></div></div><div className="ops-filter"><span>Show</span>{['all','pending','confirmed','completed','cancelled'].map(f=><button key={f} className={filter===f?'active':''} onClick={()=>setFilter(f)}>{f}</button>)}</div>
+ <div className="ops-card"><div className="ops-card-head"><div><h2>Car purchase bookings</h2><span>{filteredBookings.length} requests</span></div></div>{filteredBookings.length?<div className="ops-table-wrap"><table className="ops-table"><thead><tr><th>Customer</th><th>Vehicle</th><th>Date</th><th>Payment</th><th>Status</th><th>Action</th></tr></thead><tbody>{filteredBookings.map(b=>{const status=normalize(b.status);return <tr key={b.id}><td><strong>{b.user_name||`User #${b.user_id}`}</strong><small>Booking #{b.id}</small></td><td>{b.car_name||`Vehicle #${b.car_id}`}</td><td>{b.order_date?new Date(b.order_date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—'}</td><td>{b.payment_mode||'—'}</td><td><span className={`ops-status ${status}`}>{status}</span></td><td className="ops-actions">{status==='pending'&&<><button className="approve-btn" disabled={updating===`car-${b.id}`} onClick={()=>update('car',b.id,'confirmed')}>Approve</button><button className="reject-btn" disabled={updating===`car-${b.id}`} onClick={()=>update('car',b.id,'cancelled')}>Reject</button></>}{status==='cancelled'&&<button className="reconsider-btn" onClick={()=>update('car',b.id,'pending')}>Reconsider</button>}</td></tr>})}</tbody></table></div>:<div className="ops-empty">No {filter} car bookings.</div>}</div>
+ <div className="ops-card"><div className="ops-card-head"><div><h2>Test drive requests</h2><span>{filteredDrives.length} requests</span></div></div>{filteredDrives.length?<div className="ops-table-wrap"><table className="ops-table"><thead><tr><th>Customer</th><th>Vehicle</th><th>Showroom</th><th>Date</th><th>Slot</th><th>Status</th><th>Action</th></tr></thead><tbody>{filteredDrives.map(td=>{const status=normalize(td.status);return <tr key={td.id}><td><strong>{td.user_name||`User #${td.user_id}`}</strong><small>Request #{td.id}</small></td><td>{td.car_name||`Vehicle #${td.car_id}`}</td><td>{td.location_name||`Showroom #${td.location_id}`}</td><td>{td.preferred_date?new Date(td.preferred_date).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}):'—'}</td><td>Slot {td.slot_number}</td><td><span className={`ops-status ${status}`}>{status}</span></td><td className="ops-actions">{status==='pending'&&<><button className="approve-btn" onClick={()=>update('testdrive',td.id,'confirmed')}>Approve</button><button className="reject-btn" onClick={()=>update('testdrive',td.id,'cancelled')}>Reject</button></>}{status==='cancelled'&&<button className="reconsider-btn" onClick={()=>update('testdrive',td.id,'pending')}>Reconsider</button>}</td></tr>})}</tbody></table></div>:<div className="ops-empty">No {filter} test drive requests.</div>}</div></section>};export default ApproveBookings;
