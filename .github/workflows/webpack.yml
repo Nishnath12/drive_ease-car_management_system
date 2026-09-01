@@ -12,10 +12,7 @@ permissions:
 
 concurrency:
   group: "pages"
-  cancel-in-progress: false
-
-env:
-  VITE_API_URL: https://drive-ease-car-management-system.onrender.com/api
+  cancel-in-progress: true
 
 jobs:
   build:
